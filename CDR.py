@@ -6,7 +6,19 @@ import mfcc
 
 
 class Node:
+    """
+    Pre-trained single gaussian state
+    """
+
     def __init__(self, mean, cov, name):
+        """
+        :param name: digit the state belongs to
+        :param id: unique identifier in bpt
+        :param visited: if visited in BFS
+        :param isNull: if non-emitting state
+        :param edges: list of all incomming paths, each entry a tuple (parent node, transition prob)
+        :param next: next state, single node object, excluding self loop
+        """
         self.mean = mean
         self.cov = cov
         self.edges = []
@@ -19,6 +31,9 @@ class Node:
         self.name = name
 
     def getDis(self, vector):
+        """ 
+        Return the negative log-likelihood
+        """
         cov_diag = np.where(self.cov == 0, np.finfo(np.float64).eps, self.cov)
         try:
             ret = np.sum(np.log10(2 * np.pi * cov_diag))
@@ -31,6 +46,10 @@ class Node:
 
 
 class NullState:
+    """
+    Non-emitting state
+    """
+
     def __init__(self):
         self.edges = []
         self.next = []
@@ -43,28 +62,46 @@ class NullState:
 
 
 class Hmm:
-    def __init__(self, name):
-        self.name = name
+    """
+    Hidden Markov Model
+    """
+
+    def __init__(self, name, idx):
+        """
+        :param name: digit
+        :param head: head node 
+        :param Node_ls: list include all nodes with order
+        :param num: node number
+        """
+        self.digit = name
+        self.name = name + str(idx)
         self.head = None
         self.Node_ls = []
         self.num = 0
         self.parseHMM()
 
     def parseHMM(self):
-        model = utils.load_hmm(self.name)
+        """
+        Read and parse local hmm model
+        """
+        model = utils.load_hmm(self.digit)
         state_ls = model.state_ls
         trans_mat = model.trans_mat
         self.num = len(state_ls)
         firstState = state_ls[0]
+        # head node of the hmm
         head = Node(firstState[0], firstState[1], self.name)
+        # temporarily add only one edge for head node
         head.edges.append((head, trans_mat[0][0]))
         self.head = head
         self.Node_ls.append(head)
         prevNode = head
+        # initialize all other node and connect them
         for i in range(1, len(state_ls)):
             currState = state_ls[i]
             currNode = Node(currState[0], currState[1], self.name)
             prevNode.next.append(currNode)
+            # set the self loop probability of tail node to 0.5
             if i == len(state_ls) - 1:
                 currNode.edges.append((currNode, 0.5))
             else:
@@ -81,13 +118,18 @@ class Hmm:
 
 
 class Word:
-    def __init__(self, digits):
+    """
+    
+    """
+
+    def __init__(self, digits, idx):
         self.hmm_ls = []
+        self.idx = idx
         self.parseDigits(digits)
 
     def parseDigits(self, digits):
         for digit in digits:
-            hmm = Hmm(digit)
+            hmm = Hmm(digit, self.idx)
             self.hmm_ls.append(hmm)
 
     def getAllHeads(self):
@@ -119,12 +161,12 @@ def appendWord(nullState, word):
 def build47():
     word_ls = []
     startNull = NullState()
-    startWord = Word([num2words(i) for i in range(2, 10)])
+    startWord = Word([num2words(i) for i in range(2, 10)], 0)
     word_ls.append(startWord)
     currentNull = appendWord(startNull, startWord)
     for i in range(1, 7):
         digits = [num2words(i) for i in range(10)]
-        currentWord = Word(digits)
+        currentWord = Word(digits, i)
         word_ls.append(currentWord)
         currentNull = appendWord(currentNull, currentWord)
         if i == 2:
@@ -145,7 +187,6 @@ def parseBPT(bpt):
         currID = currNode.id
         seq[t] = currNode.name
         t -= 1
-
     currDigit = seq[0]
     digit_seq = currDigit
     for i in range(len(seq)):
@@ -174,7 +215,7 @@ def flatten(headNull):
                 continue
             child.visited = True
             q.put(child)
-    return node_ls
+    return node_ls, currID
 
 
 def recog_SS(filename, node_ls, nodeNum):
@@ -199,6 +240,8 @@ def recog_SS(filename, node_ls, nodeNum):
             else:
                 minIdx = np.argmin(parentDis)
                 minParent = currentNode.edges[minIdx][0]
+                if minParent.isNull:
+                    minParent = bpt[t][minParent.id]
                 distance = parentDis[minIdx]
                 bpt[t][currentNode.id] = minParent
             if currentNode.isNull:
@@ -225,9 +268,9 @@ def main():
             print(c)
     print(utils.countNode(startNull)) """
     startNull, currentNull = build47()
-    node_ls = flatten(startNull)
+    node_ls, nodeNum = flatten(startNull)
     # utils.dfs_print(startNull)
-    recog_SS("./sentence/test.wav", node_ls, 348)
+    recog_SS("./sentence/test.wav", node_ls, nodeNum)
     # print(utils.countNode(startNull))
 
 
