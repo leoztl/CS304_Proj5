@@ -26,7 +26,7 @@ def dfs_print(head):
     if head == None:
         return
     head.visited = True
-    print(head.id)
+    print(head)
     for child in head.next:
         if not child.visited:
             dfs_print(child)
@@ -43,18 +43,3 @@ def countNode(head):
             child.visited = True
             count += countNode(child)
         return 1 + count
-
-
-def initialize(head):
-    id = 0
-    head.visited = False
-    q = queue.Queue()
-    q.put(head)
-    while not q.empty():
-        node = q.get()
-        node.id = id
-        id += 1
-        for child in node.next:
-            if child.visited:
-                child.visited = False
-                q.put(child)
