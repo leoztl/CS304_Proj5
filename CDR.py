@@ -159,20 +159,25 @@ def appendWord(nullState, word):
 
 
 def build47():
-    word_ls = []
+    null_ls = []
     startNull = NullState()
+    null_ls.append(startNull)
     startWord = Word([num2words(i) for i in range(2, 10)], 0)
-    word_ls.append(startWord)
     currentNull = appendWord(startNull, startWord)
+    null_ls.append(currentNull)
+    specialNull = None
     for i in range(1, 7):
         digits = [num2words(i) for i in range(10)]
         currentWord = Word(digits, i)
-        word_ls.append(currentWord)
         currentNull = appendWord(currentNull, currentWord)
+        null_ls.append(currentNull)
         if i == 2:
-            startNull.next.append(currentNull)
-            currentNull.edges.append((startNull, 1.0))
-    return startNull, currentNull
+            """ startNull.next.append(currentNull)
+            currentNull.edges.append((startNull, 1.0)) """
+            specialNull = currentNull
+    """ for i in range(len(null_ls)):
+        print(i, null_ls[i]) """
+    return startNull, specialNull
 
 
 def parseBPT(bpt):
@@ -187,6 +192,7 @@ def parseBPT(bpt):
         currID = currNode.id
         seq[t] = currNode.name
         t -= 1
+    print(seq)
     currDigit = seq[0]
     digit_seq = currDigit
     for i in range(len(seq)):
@@ -218,16 +224,18 @@ def flatten(headNull):
     return node_ls, currID
 
 
-def recog_SS(filename, node_ls, nodeNum):
+def recog_SS(filename, node_ls, nodeNum, specialNull):
     sentence = mfcc.mfcc_features(filename, 40)
     # print(sentence.shape)
     node_ls[0].currDis = 0
-    node_ls[0].prevDis = 0
+    specialNull.currDis = 0
     bpt = [[None for i in range(nodeNum)] for j in range(len(sentence))]
     # print(len(bpt))
     for t in range(len(sentence)):
         vector = sentence[t]
         for currentNode in node_ls:
+            if len(currentNode.edges) == 0:
+                continue
             currentNode.prevDis = currentNode.currDis
             parentDis = []
             for edge in currentNode.edges:
@@ -240,6 +248,8 @@ def recog_SS(filename, node_ls, nodeNum):
             else:
                 minIdx = np.argmin(parentDis)
                 minParent = currentNode.edges[minIdx][0]
+                if minParent == specialNull and t == 0:
+                    minParent = currentNode
                 if minParent.isNull:
                     minParent = bpt[t][minParent.id]
                 distance = parentDis[minIdx]
@@ -253,24 +263,10 @@ def recog_SS(filename, node_ls, nodeNum):
 
 
 def main():
-    """ word_ls = []
-    currentID = 0
-    startNull = NullState(currentID)
-    currentID += 1
-    startWord = Word([num2words(i) for i in range(2, 10)], currentID)
-    currentID = startWord.getID()
-    word_ls.append(startWord)
-    currentNull = appendWord(startNull, startWord, currentID)
-    # utils.dfs_print(startNull)
-    for child in startNull.next:
-        print(child)
-        for c in child.next:
-            print(c)
-    print(utils.countNode(startNull)) """
-    startNull, currentNull = build47()
+    startNull, specialNull = build47()
     node_ls, nodeNum = flatten(startNull)
     # utils.dfs_print(startNull)
-    recog_SS("./sentence/test.wav", node_ls, nodeNum)
+    recog_SS("./sentence/5555.wav", node_ls, nodeNum, specialNull)
     # print(utils.countNode(startNull))
 
 
