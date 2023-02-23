@@ -158,28 +158,6 @@ def appendWord(nullState, word):
     return nextNull
 
 
-def build47():
-    null_ls = []
-    startNull = NullState()
-    null_ls.append(startNull)
-    startWord = Word([num2words(i) for i in range(2, 10)], 0)
-    currentNull = appendWord(startNull, startWord)
-    null_ls.append(currentNull)
-    specialNull = None
-    for i in range(1, 7):
-        digits = [num2words(i) for i in range(10)]
-        currentWord = Word(digits, i)
-        currentNull = appendWord(currentNull, currentWord)
-        null_ls.append(currentNull)
-        if i == 2:
-            """ startNull.next.append(currentNull)
-            currentNull.edges.append((startNull, 1.0)) """
-            specialNull = currentNull
-    """ for i in range(len(null_ls)):
-        print(i, null_ls[i]) """
-    return startNull, specialNull
-
-
 def parseBPT(bpt):
     seq = [None for i in range(len(bpt))]
     t = len(bpt) - 1
@@ -226,40 +204,3 @@ def flatten(headNull):
             child.visited = True
             q.put(child)
     return node_ls, currID
-
-
-def recog_SS(filename, node_ls, nodeNum, specialNull):
-    sentence = mfcc.mfcc_features(filename, 40)
-    # print(sentence.shape)
-    node_ls[0].currDis = 0
-    specialNull.currDis = 0
-    bpt = [[None for i in range(nodeNum)] for j in range(len(sentence))]
-    # print(len(bpt))
-    for t in range(len(sentence)):
-        vector = sentence[t]
-        for currentNode in node_ls:
-            if len(currentNode.edges) == 0:
-                continue
-            currentNode.prevDis = currentNode.currDis
-            parentDis = []
-            for edge in currentNode.edges:
-                parent = edge[0]
-                transition = edge[1]
-                parentDis.append(parent.prevDis + np.log(transition))
-            if len(parentDis) == 0:
-                bpt[t][currentNode.id] = currentNode
-                distance = 0
-            else:
-                minIdx = np.argmin(parentDis)
-                minParent = currentNode.edges[minIdx][0]
-                if minParent == specialNull and t == 0:
-                    minParent = currentNode
-                if minParent.isNull:
-                    minParent = bpt[t][minParent.id]
-                distance = parentDis[minIdx]
-                bpt[t][currentNode.id] = minParent
-            if currentNode.isNull:
-                currentNode.currDis = distance
-            else:
-                currentNode.currDis = distance + currentNode.getDis(vector)
-    return bpt
