@@ -189,20 +189,24 @@ def parseBPT(bpt):
     t -= 1
     while t >= 0:
         currNode = bpt[t][currID]
-        currID = currNode.id
+        # print(currNode.name)
+        try:
+            currID = currNode.id
+        except:
+            print(t)
+            print(currNode)
         seq[t] = currNode.name
         t -= 1
-    print(seq)
     currDigit = seq[0]
-    digit_seq = currDigit
+    digit_seq = [currDigit]
     for i in range(len(seq)):
         if seq[i] == currDigit:
             continue
         else:
-            digit_seq = digit_seq + seq[i]
+            digit_seq.append(seq[i])
             currDigit = seq[i]
 
-    return digit_seq
+    return digit_seq, seq
 
 
 def flatten(headNull):
@@ -258,17 +262,4 @@ def recog_SS(filename, node_ls, nodeNum, specialNull):
                 currentNode.currDis = distance
             else:
                 currentNode.currDis = distance + currentNode.getDis(vector)
-    print(parseBPT(bpt))
     return bpt
-
-
-def main():
-    startNull, specialNull = build47()
-    node_ls, nodeNum = flatten(startNull)
-    # utils.dfs_print(startNull)
-    recog_SS("./sentence/5555.wav", node_ls, nodeNum, specialNull)
-    # print(utils.countNode(startNull))
-
-
-main()
-
