@@ -68,7 +68,7 @@ def dtw(template, test):
     """Preform dtw on two list to calculate the word error rate
     :param template: correct answer
     :param test: recognized result
-    :
+    :return : minimum edit distance between two list
     """
     template = ["*"] + template
     trellis = [i for i in range(len(template))]
