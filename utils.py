@@ -1,5 +1,7 @@
 import pickle
 import queue
+import numpy as np
+from num2words import num2words
 
 
 class HMM:
@@ -10,13 +12,13 @@ class HMM:
 
 
 def save_hmm(hmm):
-    filename = "./model/" + hmm.name + ".pickle"
+    filename = "./model/tz/" + hmm.name + ".pickle"
     with open(filename, "wb") as file:
         pickle.dump(hmm, file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def load_hmm(digit):
-    filename = "./model/" + digit + ".pickle"
+    filename = "./model/tz/" + digit + ".pickle"
     with open(filename, "rb") as file:
         return pickle.load(file)
 
@@ -43,3 +45,39 @@ def countNode(head):
             child.visited = True
             count += countNode(child)
         return 1 + count
+
+
+def parseSName(filename):
+    sentence = filename.split(".")[0]
+    answer = []
+    for char in sentence:
+        answer.append(num2words(char))
+    return answer
+
+
+def getDis(d1, d2):
+    if d1 == "*" or d2 == "*":
+        return 0
+    if d1 == d2:
+        return 0
+    else:
+        return 1
+
+
+def dtw(template, test):
+    """Preform dtw on two list to calculate the word error rate
+    :param template: correct answer
+    :param test: recognized result
+    :
+    """
+    template = ["*"] + template
+    trellis = [i for i in range(len(template))]
+    for digit in test:
+        prev = trellis.copy()
+        for i in range(len(trellis)):
+            if i == 0:
+                trellis[i] = prev[i] + 1
+            else:
+                candidates = [prev[i] + 1, trellis[i - 1] + 1, prev[i - 1] + getDis(template[i], digit)]
+                trellis[i] = np.min(candidates)
+    return trellis[-1]
