@@ -119,26 +119,39 @@ class Hmm:
 
 class Word:
     """
-    
+    Representation of all candidate HMMs for a digit position, a set of parallel HMMs
     """
 
     def __init__(self, digits, idx):
+        """
+        :param digits: a list of candidate digit
+        :param idx: index of the position in the numbers
+        """
         self.hmm_ls = []
         self.idx = idx
         self.parseDigits(digits)
 
     def parseDigits(self, digits):
+        """
+        load candidate HMM models
+        """
         for digit in digits:
             hmm = Hmm(digit, self.idx)
             self.hmm_ls.append(hmm)
 
     def getAllHeads(self):
+        """
+        Return the first state of all HMMs
+        """
         head_ls = []
         for hmm in self.hmm_ls:
             head_ls.append(hmm.getHead())
         return head_ls
 
     def getAllTails(self):
+        """
+        Return the last state of all HMMs
+        """
         tail_ls = []
         for hmm in self.hmm_ls:
             tail_ls.append(hmm.getTail())
@@ -146,10 +159,24 @@ class Word:
 
 
 def appendWord(nullState, word):
+    """
+    Append Word object after the nullstate object
+    Connect all head states in Word object to the nullstate
+    Create a new nullstate object
+    Append the new nullstate after Word object
+    Connect all tail states in Word object to the new nullstate
+    Return the new nullstate
+    
+    :param nullState: Nullstate object
+    :param word: Word object 
+    :return: a new Nullstate object
+    """
+    # connect all head states to given Nullstate
     head_ls = word.getAllHeads()
     for head in head_ls:
         head.edges.append((nullState, 1.0))
         nullState.next.append(head)
+    # connect new Nullstate to all tail states
     tail_ls = word.getAllTails()
     nextNull = NullState()
     for tail in tail_ls:
@@ -159,6 +186,10 @@ def appendWord(nullState, word):
 
 
 def parseBPT(bpt):
+    """
+    Parse back pointer table obtained from DTW
+    Return the recognition result and path
+    """
     seq = [None for i in range(len(bpt))]
     t = len(bpt) - 1
     currNode = bpt[t][-1]
@@ -176,18 +207,23 @@ def parseBPT(bpt):
         seq[t] = currNode.name
         t -= 1
     currDigit = seq[0]
-    digit_seq = [currDigit]
+    digit_seq = [currDigit[:-1]]
     for i in range(len(seq)):
         if seq[i] == currDigit:
             continue
         else:
-            digit_seq.append(seq[i])
+            digit_seq.append(seq[i][:-1])
             currDigit = seq[i]
 
     return digit_seq, seq
 
 
 def flatten(headNull):
+    """Flatten a tree into list using BFS, assign each node's id
+    
+    :param headNull: starting node/state of the tree to be flattened
+    :return: a list of state object
+    """
     currID = 0
     node_ls = []
     q = queue.Queue()
