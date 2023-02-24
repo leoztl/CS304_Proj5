@@ -5,6 +5,10 @@ from num2words import num2words
 
 
 class HMM:
+    """
+    HMM object defined in project 3
+    """
+
     def __init__(self, state_ls, trans_mat, name):
         self.state_ls = state_ls
         self.trans_mat = trans_mat
@@ -48,6 +52,9 @@ def countNode(head):
 
 
 def parseSName(filename):
+    """
+    Get correct answer from file name
+    """
     sentence = filename.split(".")[0]
     answer = []
     for char in sentence:

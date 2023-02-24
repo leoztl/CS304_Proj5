@@ -84,6 +84,7 @@ class Hmm:
         """
         Read and parse local hmm model
         """
+        # load pre-trained model
         model = utils.load_hmm(self.digit)
         state_ls = model.state_ls
         trans_mat = model.trans_mat
@@ -190,6 +191,7 @@ def parseBPT(bpt):
     Parse back pointer table obtained from DTW
     Return the recognition result and path
     """
+    # initialize path
     seq = [None for i in range(len(bpt))]
     t = len(bpt) - 1
     currNode = bpt[t][-1]
@@ -206,6 +208,7 @@ def parseBPT(bpt):
             print(currNode)
         seq[t] = currNode.name
         t -= 1
+    # retrieve final results from the path
     currDigit = seq[0]
     digit_seq = [currDigit[:-1]]
     for i in range(len(seq)):

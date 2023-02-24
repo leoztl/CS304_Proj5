@@ -5,33 +5,46 @@ from num2words import num2words
 
 
 def build47():
+    """
+    Build a graph of 4-digit or 7-digit telephone numbers
+    """
     word_ls = []
+    # first non-emitting state
     startNull = NullState()
+    # first digit of area code, only 2-9
     startWord = Word([num2words(i) for i in range(2, 10)], 0)
     word_ls.append(startWord)
     currentNull = appendWord(startNull, startWord)
-    specialNull = None
+    branchNull = None
+    # append other Word object and non-emitting state
     for i in range(1, 7):
         digits = [num2words(i) for i in range(10)]
         currentWord = Word(digits, i)
         word_ls.append(currentWord)
         currentNull = appendWord(currentNull, currentWord)
         if i == 2:
-            specialNull = currentNull
-    return startNull, specialNull
+            branchNull = currentNull
+    return startNull, branchNull
 
 
 def RSS(sentence, node_ls, nodeNum, branchNull, force7digit):
+    """Recognize single sentence
+
+    :param sentence: mfcc features of recording
+    :param node_ls: flattened graph, a list of state, including non-emitting state
+    :param nodeNum: total state number, including non-emitting state
+    :param branchNull: branchNull to allow skip of area code
+    :param force7digit: if to force the model to be 7-digit
+    :return: recognition results
+    """
     startNull = node_ls[0]
     startNull.currDis = 0
-    if force7digit:
+    if not force7digit:
         branchNull.currDis = 0
     bpt = [[None for i in range(nodeNum)] for j in range(len(sentence))]
     # print(len(bpt))
     for t in range(len(sentence)):
         vector = sentence[t]
-        for currentNode in node_ls:
-            currentNode.prevDis = currentNode.currDis
         for currentNode in node_ls:
             currentNode.prevDis = currentNode.currDis
             if currentNode == startNull:
